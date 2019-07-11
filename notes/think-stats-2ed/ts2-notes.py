@@ -1,3 +1,6 @@
+################################################################################
+#                              #   Chapter 01   #                              #
+################################################################################
 # create a DataFrame
 import nsfg
 def ReadFemPreg(dct_file='2002FemPreg.dct',
@@ -35,3 +38,21 @@ preg_map = MakePregMap(df)
 caseid = 10229
 indices = preg_map[caseid]      # indices for pregnancies to respondent caseid=10229
 df.outcome[indices].values
+
+################################################################################
+#                              #   Chapter 02   #                              #
+################################################################################
+
+import thinkstats2
+hist = thinkstats2.Hist([1,2,2,3,5])
+
+import thinkplot
+thinkplot.Hist(hist)
+thinkplot.Show(xlabe='value', ylabel='frequency')
+
+preg = nsfg.ReadFemPreg()
+live = preg[preg.outcome == 1]
+# generate and plot the histogram of birthwgt_lb
+hist = thinkstats2.Hist(live.birthwgt_lb, label='birthwgt_lb')
+thinkplot.Hist(hist)
+thinkplot.Show(xlabel='pounds', ylabel='frequency')
