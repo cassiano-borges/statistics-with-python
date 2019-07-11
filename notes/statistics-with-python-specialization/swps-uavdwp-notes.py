@@ -436,7 +436,7 @@ sns.distribution(df.CWDistance)
 plt.show()
 
 
-# cout plot
+# count plot
 sns.countplot(x='Gender', data=df)
 plt.xticks(rotation=-45)
 plt.show()
@@ -508,3 +508,242 @@ sns.boxplot(x = tips_data["tip"], y = tips_data["day"])
 g = sns.FacetGrid(tips_data, row = "day")
 g = g.map(plt.hist, "tip")
 plt.show()
+
+
+# ========================== Univariate data analysis ==========================
+
+%matplotlib inline      # when using Jupyter Notebook
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
+
+da.variable.value_counts()
+da.variable.replace()
+da.variable.dropna()
+da.variable.fillna("variable_name")
+# pandas
+da.mean()
+da.median()
+da.quantile(0.75)
+# numpy
+np.mean(da)
+np.percentile(da, 50)
+np.percentile(da, 75)
+# graphical summaries
+sns.distplot(da.variable.dropna())
+# ==============================================================================
+
+
+
+
+da = pd.read_csv("nhanes_2015_2016.csv")
+
+# create a frequency table
+## DMDEDUC2 person's level of educational attainment
+## 9.0 are non-missing values
+da.DMDEDUC2.value_counts()      # pandas
+# 4.0    1621
+# 5.0    1366
+# 3.0    1186
+# 1.0     655
+# 2.0     643
+# 9.0       3
+# Name: DMDEDUC2, dtype: int64
+
+# value_counts automatically excludes missing values
+print(da.DMDEDUC2.value_counts().sum())
+print(da.shape)
+# 5474
+# (5735, 28)
+
+# counting missing values
+pd.isnull(da.DMDEDUC2).sum()
+# 261
+
+# DMDEDUC2x - create a new variable with text labels
+da["DMDEDUC2x"] = da.DMDEDUC2.replace({1: "<9", 2: "9-11", 3: "HS/GED",
+                                       4: "Some college/AA", 5: "College",
+                                       7: "Refused", 9: "Don't know"})
+da.DMDEDUC2x.value_counts()
+# Some college/AA    1621
+# College            1366
+# HS/GED             1186
+# <9                  655
+# 9-11                643
+# Don't know            3
+# Name: DMDEDUC2x, dtype: int64
+
+# recoding gender
+da["RIAGENDRx"] = da.RIAGENDR.replace({1: "Male", 2: "Female"})
+
+# proportion of each value
+x = da.DMDEDUC2x.value_counts()
+x / x.sum()
+# Some college/AA    0.296127
+# College            0.249543
+# HS/GED             0.216661
+# <9                 0.119657
+# 9-11               0.117464
+# Don't know         0.000548
+# Name: DMDEDUC2x, dtype: float64
+
+# filling the missing values
+da["DMDEDUC2x"] = da.DMDEDUC2x.fillna("Missing")
+x = da.DMDEDUC2x.value_counts()
+x / x.sum()
+# Some college/AA    0.282650
+# College            0.238187
+# HS/GED             0.206800
+# <9                 0.114211
+# 9-11               0.112119
+# Missing            0.045510
+# Don't know         0.000523
+# Name: DMDEDUC2x, dtype: float64
+
+# BMXWT - body weight variable
+## dropna - drop the missing values
+da.BMXWT.dropna().describe()
+# count    5666.000000
+# mean       81.342676
+# std        21.764409
+# min        32.400000
+# 25%        65.900000
+# 50%        78.200000
+# 75%        92.700000
+# max       198.900000
+# Name: BMXWT, dtype: float64
+
+# individual summaries
+x = da.BMXWT.dropna()
+print(x.mean())     # pandas mean
+print(np.mean(x))   # numpy mean
+
+print(x.median())
+print(np.percentile(x, 50)) # 50th percentile
+print(np.percentile(x, 75)) # 75th percentile
+print(x.quantile(0.75))     # pandas 75th percentile
+
+# BPXSY1 - systolic blood pressure measurement
+## the proprotion of the NHANES sample who would be considered to have pre-hypertension.
+np.mean((da.BPXSY1 >= 120) & (da.BPXSY1 <= 139))
+# 0.37419354838709679
+
+# BPXDI1 - diastolic blood pressure.
+# pre-hypertensive based on diastolic blood pressure
+np.mean((da.BPXDI1 >= 80) & (da.BPXDI1 <= 89))
+# 0.14803836094158676
+
+# pre-hypertensive based on either systolic or diastolic blood pressure
+a = (da.BPXSY1 >= 120) & (da.BPXSY1 <= 139)
+b = (da.BPXDI1 >= 80) & (da.BPXDI1 <= 89)
+print(np.mean(a | b))
+# 0.439755884917
+
+ # BPXSY2 - the second measurement of systolic blood pressure
+ # 'white coat anxiety'
+ ### the extent to which white coat anxiety is present in the NHANES data
+ ### by looking a the mean difference between the first two systolic
+ ### or diastolic blood pressure measurements
+print(np.mean(da.BPXSY1 - da.BPXSY2))
+print(np.mean(da.BPXDI1 - da.BPXDI2))
+# 0.674986030918
+# 0.349040789719
+
+# distribution of BMXWT
+sns.distplot(da.BMXWT.dropna())
+
+# histogram of systolic blood pressure
+sns.distplot(da.BPXSY1.dropna())
+
+bp = sns.boxplot(da.loc[:, ["BPXSY1", "BPXSY2", "BPXDI1", "BPXDI2"]])
+_ = bp.set_ylabel("Blood pressure in mm/Hg")
+
+# stratification
+### divide it into smaller, more uniform subsets
+### analyze each strata on its own
+
+# partition the data into age strata
+da.["agegrp"] = pd.cut(da.RIDAGEYR, [18, 30, 40, 50, 60, 70, 80])
+# construct side-by-side boxplots
+plt.figure(figsize=(12, 5))     # figure 12 wide x 5 tall
+# BPXSY1 stratified by age group
+sns.boxplot(x="agegrp", y="BPXSY1", data=da)
+
+# difference between women and men
+da["agegrp"] = pd.cut(da.RIDAGEYR, [18, 30, 40, 50, 60, 70, 80])
+plt.figure(figsize=(12, 5))
+# doubly stratify the data by gender and age
+# first by age than by gender
+sns.boxplot(x="agegrp", y="BPXSY1", hue="RIAGENDRx", data=da)
+# group by gender than by age
+sns.boxplot(x="RIAGENDRx", y="BPXSY1", hue="agegrp", data=da)
+
+
+# frequency distribution of educational attainment
+da.groupby("agegrp")["DMDEDUC2x"].value_counts()
+# "some college" is the most common response in all age bands
+# agegrp    DMDEDUC2x
+# (18, 30]  Some college/AA    364
+#           College            278
+#           HS/GED             237
+#           Missing            128
+#           9-11                99
+#           <9                  47
+# (30, 40]  Some college/AA    282
+#           College            264
+#           HS/GED             182
+#           9-11               111
+#           <9                  93
+# (40, 50]  Some college/AA    262
+#           College            260
+#           HS/GED             171
+#           9-11               112
+#           <9                  98
+# (50, 60]  Some college/AA    258
+#           College            220
+#           HS/GED             220
+#           9-11               122
+#           <9                 104
+# (60, 70]  Some college/AA    238
+#           HS/GED             192
+#           College            188
+#           <9                 149
+#           9-11               111
+# (70, 80]  Some college/AA    217
+#           HS/GED             184
+#           <9                 164
+#           College            156
+#           9-11                88
+#           Don't know           3
+# Name: DMDEDUC2x, dtype: int64
+
+
+# stratify jointly by age and gender
+# pivot the education levels into the columns, and normalize the counts so that they sum to 1.
+# the results can be interpreted as proportions or probabilities
+
+# eliminate rare/missing values
+dx = da.loc[~da.DMDEDUC2x.isin(["Don't know", "Missing"]), :]
+dx = dx.groupby(["agegrp", "RIAGENDRx"])["DMDEDUC2x"]
+dx = dx.value_counts()
+# reestructure the results from long to wide
+dx = dx.unstack()
+# normalize within each stratum to get proportions
+dx = dx.apply(lambda x: x/x.sum(), axis=1)
+# limit display to 3 decimal places
+print(dx.to_string(float_format="%.3f"))
+# DMDEDUC2x           9-11    <9  College  HS/GED  Some college/AA
+# agegrp   RIAGENDRx
+# (18, 30] Female    0.080 0.049    0.282   0.215            0.374
+#          Male      0.117 0.042    0.258   0.250            0.333
+# (30, 40] Female    0.089 0.097    0.314   0.165            0.335
+#          Male      0.151 0.103    0.251   0.227            0.269
+# (40, 50] Female    0.110 0.106    0.299   0.173            0.313
+#          Male      0.142 0.112    0.274   0.209            0.262
+# (50, 60] Female    0.117 0.102    0.245   0.234            0.302
+#          Male      0.148 0.123    0.231   0.242            0.256
+# (60, 70] Female    0.118 0.188    0.195   0.206            0.293
+#          Male      0.135 0.151    0.233   0.231            0.249
+# (70, 80] Female    0.105 0.225    0.149   0.240            0.281
+#          Male      0.113 0.180    0.237   0.215            0.255
